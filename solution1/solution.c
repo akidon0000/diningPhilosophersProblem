@@ -1,258 +1,84 @@
+#include <pthread.h>
 #include <stdio.h>
-// #include <stdlib.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <assert.h>
 
-// struct node{
-//   int data;
-//   struct node *next;
-// };
+#define PHILOS 5
+#define DELAY 5000
+#define FOOD 50
 
-// struct node *head, *tail, *p;
-// int x = 1;
+void *philosopher(void *id);
+void grab_chopstick(int, int, char *);
+void down_chopsticks(int, int);
+int food_on_table ();
 
-
-// //関数のプロトタイプ宣言
-// void Add(int);
-// void Del();
-// void Display();
-// void Release();
-// struct node list;
-
-// int main(){
-//   list.next=&list;
-//   // p=(struct node*)malloc(sizeof(struct node));
-//   // p->data=x;
-//   // p->next=&list;
-//   // tail=&list;
-//   // // for(head=list.next;head!=&list;head=head->next){
-//   // //   tail=head;
-//   // // }
-//   // tail->next=p;
-//   Add(5);
-//   Add(6);
-//   Add(4);
-//   Add(2);
-//   Display();
-//   // Del();
-//   head=&list;
-//   // p=list.next;
-//   // head->next=p->next;
-//   p=head;
-//   head=head->next;
-//   free(p);
-
-//   Display();
-//   return 0;
-// }
+pthread_mutex_t chopstick[PHILOS];
+pthread_t philo[PHILOS];
+pthread_mutex_t food_lock;
+int sleep_seconds = 0;
 
 
-// void Add(int x){
-//   // struct node list;
-//   //新しいリストの領域を確保
-//   p=(struct node*)malloc(sizeof(struct node));
+int main(int argn, char **argv) {
+  int i;
 
-//   p->data=x;
-//   //次の要素は先頭要素のポインタ
-//   p->next=&list;
-//   //最初は先頭が末尾直前のポインタになる
-//   tail=&list;
-//   //末尾のポインタまで移動
-//   for(head=list.next;head!=&list;head=head->next){
-//     tail=head;
-//   }
-//   //リストを連結する。
-//   tail->next=p;
-//   puts("追加しました");
-// }
+  if (argn == 2) sleep_seconds = atoi (argv[1]);
 
-// void Del(){
-//   struct node* prev;
-//   head=&list;
-//   p=list.next;
-//   head->next=p->next;
-//   free(p);
-//   // if(p->data==5){
-//   //   prev->next=p->next;
-//   //   free(p);
-//   //   puts("aa");
-//   // }
-
-// 	//リストを末尾(先頭要素のポインタ)までループ
-// 	// for(struct node *p=list.next;p!=&list;p=p->next){
-// 	// 	//その値があれば
-// 	// 	if(p->data==7){
-// 	// 		//削除要素の前のリストにつなげる
-// 	// 		//その前に次の要素が末尾ならつなげる必要ないのでチェック
-// 	// 		if(p->next!=&list){
-// 	// 			//削除直前の要素につなげる
-// 	// 			prev->next=p->next;
-// 	// 			//削除対象要素の解放
-// 	// 			free(p);
-// 	// 			return;
-// 	// 		}
-// 	// 		//末尾要素に先頭要素のポインタを保存
-// 	// 		prev->next=&list;
-// 	// 		//削除対象要素の解放
-// 	// 		free(p);
-// 	// 		puts("削除しました");
-// 	// 		return;
-// 	// 	}
-// 	// 	prev=p;
-// 	// }
-//   return;
-// }
-
-
-// void Display(){
-// 	if(list.next==&list){
-// 		puts("まだ何もありません");
-// 		return;
-// 	}
-
-// 	//末尾まで全部表示
-// 	for(struct node  *p=list.next;p!=&list;p=p->next){
-
-// 		printf("%d,",p->data);
-// 	}
-
-// 	puts("");
-
-// }
-
-// void Release(){
-
-// 	//次のリストのポインタ
-// 	struct node *next;
-// 	//削除対象のポインタ
-// 	struct node *del;
-
-// 	next=list.next;
-
-// 	//末尾までループ
-// 	while(next!=&list){
-// 		//削除対象のポインタを保存
-// 		del=next;
-// 		//次のリストのポインタを取得しとく
-// 		next=next->next;
-
-// 		free(del);
-// 	}
-// }
-
-// #define int b[10]
-int b[10];
-int counter = 0;
-
-// void part_of_sort( int x[ ], int start, int end )
-// {
-//   int mid, i, j, k;
-//   mid = (start + end) / 2;
-//   i = start;
-//   j = mid + 1;
-//   for(k = start; k <= end; k++){
-//     if(x[i] > x[j] && j <= end || i > mid){
-//       b[k] = x[j];
-//       j ++;
-//     }
-//     else{
-//       b[k] = x[i];
-//       i ++;
-//     }
-//   }
-
-//   for(k = start; k <= end; k++) x[k] = b[k];
-
-//   // counter++;
-//   // printf("\n\n\n%d\n",counter);
-//   // for(int i=0; i < 10; i++){
-//   //   printf("%d",x[i]);
-//   // }
-// }
-
-// void sort1(int x[], int start, int end)
-// {
-//   int mid;
-//   if(start >= end) return;
-//   mid = (start + end) / 2;
-//   sort1(x, start, mid);
-//   sort1(x, mid+1, end);
-//   part_of_sort( x, start, end );
-// }
-// void sort2(int x[], int n)
-// {
-//   int i, j, t;
-//   for(i = 0; i < n -1; i++){
-//     for( j = n -1 ; j > i ; j --){
-//       if(x[ j ] >x[ j -1 ] ){
-//         t = x[ j ];
-//         x[ j ] = x[ j -1 ];
-//         x[ j -1 ] = t;
-//       }
-//     }
-//     counter++;
-//     printf("\n\n\n%d\n",counter);
-//     for(int i=0; i < 10; i++){
-//       printf("%d",x[i]);
-//     }
-//   }
-// }
-// void sort3(int x[], int n)
-// {
-//   int i, j, t;
-//   for( i = 1 ; i < n ; i++ ){
-//     for( j = i ; j > 0 ; j--){
-//       if( x[ j ] < x[ j -1 ] ){
-//         t = x[ j ];
-//         x[ j ] = x[ j -1 ];
-//         x[ j -1 ] = t;
-//       }
-//         else
-//         break;
-//     }
-//       counter++;
-//       printf("\n\n\n%d\n",counter);
-//       for(int i=0; i < 10; i++){
-//         printf("%d",x[i]);
-//       }
-//   }
-// }
-
-
-int part_of_sort(int a[], int start, int end)
-{
-  int i, j, t;
-  i = start; j = end -1;
-  while(1){
-    while(a[i] < a[end]) i++;
-    while(a[j] > a[end] && j > i) j--;
-    if(i >= j)break;
-    t = a[i]; a[i] = a[j]; a[j] = t;
-    i++; j--;
-  }
-  t = a[i]; a[i] = a[end]; a[end] = t;
-  return i;
+  pthread_mutex_init (&food_lock, NULL);
+  for (i = 0; i < PHILOS; i++) pthread_mutex_init(&chopstick[i], NULL);
+  for (i = 0; i < PHILOS; i++) pthread_create(&philo[i], NULL, philosopher, (void *)i);
+  for (i = 0; i < PHILOS; i++) pthread_join(philo[i], NULL);
+  return 0;
 }
 
-void sort4(int x[], int start, int end)
-{
-  int s;
-  if(start >= end)return;
-  s = part_of_sort(x, start, end);
+void * philosopher(void *num) {
+  int id;
+  int i, left_chopstick, right_chopstick, f;
 
-  counter++;
-  printf("\n\n\n%d\n",counter);
-  for(int i=0; i < 10; i++){
-    printf("%d",x[i]);
+  id = (int)num;
+  printf("哲学者%d 食事をする\n", id);
+  right_chopstick = id;
+  left_chopstick = id + 1;
+
+  /* 箸が一巡した */
+  if (left_chopstick == PHILOS) left_chopstick = 0;
+
+  while(f == food_on_table()) {
+
+    if (id == 1) sleep(sleep_seconds);
+
+    grab_chopstick(id, right_chopstick, "right ");
+    grab_chopstick(id, left_chopstick, "left");
+
+    printf("哲学者%d 食事中.\n", id);
+    usleep(DELAY * (FOOD - f + 1));
+    down_chopsticks (left_chopstick, right_chopstick);
   }
 
-  sort4(x, start, s-1);
-  sort4(x, s+1, end);
+  printf("哲学者%d 完食\n", id);
+  return (NULL);
 }
 
-int main() {
-  int x[10] = {6,1,1,8,2,1,0,0,6,6};
-  // sort1(x,0,9);
-  // sort2(x,10);
-  // sort3(x,10);
-  sort4(x,0,9);
-  printf("\nHello,world!\n");
+int food_on_table() {
+  static int food = FOOD;
+  int myfood;
+
+  pthread_mutex_lock (&food_lock);
+  if (food > 0) {
+    food--;
+  }
+  myfood = food;
+  pthread_mutex_unlock(&food_lock);
+  return myfood;
+}
+
+void grab_chopstick(int phil, int c, char *hand) {
+  pthread_mutex_lock(&chopstick[c]);
+  printf("Philosopher %d: got %s chopstick %d\n", phil, hand, c);
+}
+
+void down_chopsticks(int c1, int c2) {
+  pthread_mutex_unlock(&chopstick[c1]);
+  pthread_mutex_unlock(&chopstick[c2]);
 }
